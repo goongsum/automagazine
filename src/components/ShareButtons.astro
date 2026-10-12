@@ -1,0 +1,100 @@
+---
+interface Props {
+  url: string;
+  title: string;
+}
+const { url, title } = Astro.props;
+const u = encodeURIComponent(url);
+const t = encodeURIComponent(title);
+const links = [
+  { name: '페이스북', short: 'f', href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+  { name: 'X(트위터)', short: 'X', href: `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
+  { name: '네이버', short: 'N', href: `https://share.naver.com/web/shareView?url=${u}&title=${t}` },
+];
+---
+
+<div class="share" data-share data-url={url} data-title={title}>
+  <button type="button" class="share__btn share__native" data-native hidden>공유</button>
+  {
+    links.map((l) => (
+      <a class="share__btn" href={l.href} target="_blank" rel="noopener" title={`${l.name}에 공유`}>
+        <span aria-hidden="true">{l.short}</span>
+        <span class="visually-hidden">{l.name}에 공유</span>
+      </a>
+    ))
+  }
+  <button type="button" class="share__btn" data-copy title="기사 주소 복사">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"></path><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>
+    <span class="visually-hidden">기사 주소 복사</span>
+  </button>
+  <span class="share__toast" role="status" aria-live="polite"></span>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-share]').forEach((box) => {
+    const url = box.dataset.url ?? location.href;
+    const title = box.dataset.title ?? document.title;
+    const toast = box.querySelector<HTMLElement>('.share__toast');
+    const native = box.querySelector<HTMLButtonElement>('[data-native]');
+
+    if (native && typeof navigator.share === 'function') {
+      native.hidden = false;
+      native.addEventListener('click', () => navigator.share({ title, url }).catch(() => {}));
+    }
+
+    box.querySelector('[data-copy]')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        if (toast) toast.textContent = '기사 주소를 복사했습니다.';
+      } catch {
+        if (toast) toast.textContent = url;
+      }
+      setTimeout(() => toast && (toast.textContent = ''), 2500);
+    });
+  });
+</script>
+
+<style>
+  .share {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .share__btn {
+    display: inline-grid;
+    place-items: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .share__btn[hidden] {
+    display: none;
+  }
+  .share__btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .share__btn:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+  .share__toast {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    font-size: 12px;
+    color: var(--brand);
+    white-space: nowrap;
+  }
+</style>

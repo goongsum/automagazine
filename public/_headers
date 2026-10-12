@@ -1,0 +1,15 @@
+# Cloudflare Pages 응답 헤더 설정
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# 빌드 결과물(파일명에 해시 포함)은 오래 캐시
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 관리자 화면은 검색엔진에 노출하지 않음
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-cache

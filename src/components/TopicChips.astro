@@ -1,0 +1,71 @@
+---
+import { TOPICS, topicUrl } from '../lib/categories';
+
+interface Props {
+  /** 표시할 분야 id (생략하면 전체) */
+  ids?: string[];
+  current?: string;
+  label?: string;
+}
+const { ids, current, label = '분야별 보기' } = Astro.props;
+const topics = ids ? TOPICS.filter((t) => ids.includes(t.id)) : TOPICS;
+---
+
+{
+  topics.length > 0 && (
+    <nav class="chips" aria-label={label}>
+      <span class="chips__label">{label}</span>
+      <ul>
+        {topics.map((t) => (
+          <li>
+            <a href={topicUrl(t.id)} aria-current={t.id === current ? 'page' : undefined}>
+              #{t.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+  .chips__label {
+    flex: none;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--muted);
+  }
+  ul {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+  }
+  a {
+    display: block;
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-size: 14px;
+    white-space: nowrap;
+    background: #fff;
+  }
+  a:hover,
+  a[aria-current='page'] {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+  a[aria-current='page'] {
+    background: rgba(10, 88, 202, 0.06);
+    font-weight: 700;
+  }
+</style>

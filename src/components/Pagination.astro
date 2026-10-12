@@ -1,0 +1,63 @@
+---
+import type { Page } from 'astro';
+
+interface Props {
+  page: Page<unknown>;
+  /** 1페이지 주소 (예: /category/news/) */
+  baseUrl: string;
+}
+
+const { page, baseUrl } = Astro.props;
+const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+const urlFor = (n: number) => (n === 1 ? base : `${base}${n}/`);
+
+// 현재 페이지 주변 최대 5개 번호
+const start = Math.max(1, Math.min(page.currentPage - 2, page.lastPage - 4));
+const end = Math.min(page.lastPage, start + 4);
+const numbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+---
+
+{
+  page.lastPage > 1 && (
+    <nav class="pagination" aria-label="페이지 이동">
+      {page.currentPage > 1 ? <a href={urlFor(page.currentPage - 1)} rel="prev">이전</a> : <span class="is-disabled">이전</span>}
+      {numbers.map((n) =>
+        n === page.currentPage ? (
+          <span class="is-current" aria-current="page">{n}</span>
+        ) : (
+          <a href={urlFor(n)}>{n}</a>
+        ),
+      )}
+      {page.currentPage < page.lastPage ? <a href={urlFor(page.currentPage + 1)} rel="next">다음</a> : <span class="is-disabled">다음</span>}
+    </nav>
+  )
+}
+
+<style>
+  .pagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 32px;
+  }
+  .pagination > * {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    font-size: 14px;
+  }
+  .is-current {
+    background: var(--brand-dark);
+    border-color: var(--brand-dark);
+    color: #fff;
+    font-weight: 700;
+  }
+  .is-disabled {
+    color: var(--line-strong);
+  }
+</style>

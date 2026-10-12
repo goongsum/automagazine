@@ -1,0 +1,98 @@
+---
+import ads from '../settings/ads.json';
+import { site } from '../lib/site';
+
+type SlotId = keyof typeof ads.slots;
+
+interface Props {
+  slot: SlotId;
+  class?: string;
+}
+
+// 슬롯별 권장 크기(자리표시 안내용)
+const SIZES: Record<SlotId, { label: string; ratio?: string }> = {
+  home_top: { label: '메인 상단 배너 · 1200×150' },
+  home_middle: { label: '메인 중단 배너 · 1200×150' },
+  sidebar: { label: '사이드 배너 · 300×250', ratio: '6 / 5' },
+  article_bottom: { label: '기사 하단 배너 · 760×120' },
+};
+
+const { slot, class: className } = Astro.props;
+const config = ads.slots[slot];
+const size = SIZES[slot];
+const hasAd = ads.enabled && config.active && Boolean(config.image);
+const showPlaceholder = ads.enabled && !hasAd && ads.showPlaceholder;
+---
+
+{
+  (hasAd || showPlaceholder) && (
+    <aside class:list={['ad', `ad--${slot}`, className]} aria-label="광고">
+      <span class="ad__label">광고</span>
+      {hasAd ? (
+        <a class="ad__link" href={config.url || undefined} target="_blank" rel="sponsored noopener">
+          <img src={config.image} alt={config.alt || `${config.advertiser} 광고`} loading="lazy" decoding="async" />
+        </a>
+      ) : (
+        <a class="ad__placeholder" href="/about/#ad" style={size.ratio ? `aspect-ratio: ${size.ratio}` : undefined}>
+          <span>광고 영역</span>
+          <small>{size.label}</small>
+          <small>광고 문의 {site.adEmail}</small>
+        </a>
+      )}
+    </aside>
+  )
+}
+
+<style>
+  .ad {
+    position: relative;
+    padding: 22px 8px 8px;
+    background: var(--ad-bg);
+    border: 1px solid var(--ad-line);
+    border-radius: var(--radius);
+  }
+  .ad__label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: var(--ad-ink);
+    border-radius: var(--radius) 0 var(--radius) 0;
+  }
+  .ad__link img {
+    width: 100%;
+    margin: 0 auto;
+  }
+  .ad__placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 84px;
+    max-height: 250px;
+    width: 100%;
+    color: var(--ad-ink);
+    border: 1px dashed var(--ad-line);
+    border-radius: 4px;
+    text-align: center;
+  }
+  .ad__placeholder span {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .ad__placeholder small {
+    font-size: 12px;
+    opacity: 0.85;
+  }
+  .ad__placeholder:hover {
+    color: var(--ink);
+  }
+  .ad--sidebar .ad__placeholder {
+    max-height: none;
+  }
+</style>

@@ -1,0 +1,315 @@
+/* ==========================================================
+   오토매거진 공통 스타일 (모바일 우선)
+   ========================================================== */
+
+:root {
+  --brand: #0a58ca;
+  --brand-dark: #0b2545;
+  --accent: #00a3bf;
+  --ink: #111827;
+  --ink-2: #374151;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+  --bg: #ffffff;
+  --bg-soft: #f4f6f9;
+  --ad-bg: #fafaf7;
+  --ad-line: #c9c6b8;
+  --ad-ink: #6b6655;
+
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+
+  --container: 1200px;
+  --gutter: 16px;
+  --radius: 6px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--brand);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  transform: translateY(-200%);
+  z-index: 100;
+  padding: 8px 12px;
+  background: var(--brand-dark);
+  color: #fff;
+  border-radius: var(--radius);
+}
+
+.skip-link:focus {
+  transform: none;
+  color: #fff;
+}
+
+/* 공통 배지 */
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 3px;
+  color: var(--brand);
+  background: rgba(10, 88, 202, 0.08);
+  white-space: nowrap;
+}
+
+.badge--ad {
+  color: var(--ad-ink);
+  background: #efece2;
+  border: 1px solid var(--ad-line);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 섹션 제목 */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.section-title h2 {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.section-title h2 a:hover {
+  color: var(--brand);
+}
+
+.section-title > a {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* 이미지 자리표시 */
+.thumb {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  aspect-ratio: 16 / 9;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+a:hover .thumb img {
+  transform: scale(1.03);
+}
+
+.thumb--empty {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--brand-dark), #16467f);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* 본문(기사·고정 페이지) */
+.prose {
+  font-size: 17px;
+  line-height: 1.85;
+  color: #1f2937;
+}
+
+.prose > * + * {
+  margin-top: 1.2em;
+}
+
+.prose h2 {
+  font-size: 1.3em;
+  margin-top: 2em;
+}
+
+.prose h3 {
+  font-size: 1.12em;
+  margin-top: 1.8em;
+}
+
+.prose a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+
+.prose li + li {
+  margin-top: 0.4em;
+}
+
+.prose blockquote {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 14px 18px;
+  border-left: 4px solid var(--accent);
+  background: var(--bg-soft);
+  color: var(--ink-2);
+}
+
+.prose img {
+  border-radius: var(--radius);
+  margin: 0 auto;
+}
+
+/* 사진 바로 다음 줄(또는 다음 문단)의 기울임 글씨는 사진 설명으로 표시 */
+.prose p > img + em,
+.prose p:has(> img:only-child) + p > em:only-child {
+  display: block;
+  font-style: normal;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.prose p:has(> img:only-child) + p > em:only-child {
+  margin-top: -0.6em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.prose th {
+  background: var(--bg-soft);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 2em 0;
+}
+
+.prose code {
+  font-size: 0.9em;
+  background: var(--bg-soft);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 24px;
+  }
+
+  .prose {
+    font-size: 18px;
+  }
+}

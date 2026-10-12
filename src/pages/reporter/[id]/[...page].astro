@@ -1,0 +1,69 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ListPage from '../../../components/ListPage.astro';
+import AuthorAvatar from '../../../components/AuthorAvatar.astro';
+import { getArticles, getAuthors, reporterUrl, PAGE_SIZE, type Article, type Author } from '../../../lib/articles';
+import { absoluteUrl } from '../../../lib/site';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const articles = await getArticles();
+  const authors = await getAuthors();
+  return [...authors.values()].flatMap((author) =>
+    paginate(
+      articles.filter((a) => a.data.author.id === author.id),
+      { pageSize: PAGE_SIZE, params: { id: author.id }, props: { author } },
+    ),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<Article>;
+  author: Author;
+}
+const { page, author } = Astro.props;
+const { name, role, email, bio } = author.data;
+const heading = `${name} ${role}`;
+const title = page.currentPage > 1 ? `${heading} (${page.currentPage}페이지)` : heading;
+const description = bio ?? `${heading}의 기사 목록`;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name,
+      jobTitle: role,
+      ...(email ? { email } : {}),
+      ...(bio ? { description: bio } : {}),
+      url: absoluteUrl(reporterUrl(author.id)),
+    },
+  },
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <ListPage title={heading} page={page} baseUrl={reporterUrl(author.id)}>
+    <div slot="before-title" class="avatar">
+      <AuthorAvatar author={author} size={72} />
+    </div>
+    <div slot="after-title" class="profile">
+      {bio && <p>{bio}</p>}
+      {email && <p><a href={`mailto:${email}`}>{email}</a></p>}
+    </div>
+  </ListPage>
+</BaseLayout>
+
+<style>
+  .avatar {
+    margin-bottom: 12px;
+  }
+  .profile p {
+    margin-top: 6px;
+    color: var(--ink-2);
+  }
+  .profile a {
+    color: var(--brand);
+  }
+</style>

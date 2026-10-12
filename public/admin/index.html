@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>오토매거진 관리자</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+  </head>
+  <body>
+    <!--
+      Decap CMS (Git 기반 CMS)
+      - 기사·사진은 GitHub 저장소에 커밋되고, Cloudflare Pages가 자동으로 다시 배포합니다.
+      - 편집 화면 구성은 /admin/config.yml 에서 바꿉니다.
+    -->
+    <script>
+      window.CMS_MANUAL_INIT = true;
+    </script>
+    <script src="https://unpkg.com/decap-cms@3.16.3/dist/decap-cms.js"></script>
+    <script>
+      (function () {
+        var isLocal = ['localhost', '127.0.0.1'].indexOf(location.hostname) !== -1;
+
+        // 로그인(OAuth)은 현재 접속한 주소의 /api/auth (Cloudflare Pages Functions)로 처리합니다.
+        // 그래서 *.pages.dev 주소와 연결한 도메인 어디에서나 같은 설정으로 동작합니다.
+        CMS.init({
+          config: {
+            backend: { base_url: location.origin },
+            site_url: location.origin,
+            display_url: location.origin,
+            // 로컬 개발: `npm run dev` + `npm run cms` 를 함께 실행하면 로그인 없이 편집할 수 있습니다.
+            local_backend: isLocal,
+          },
+        });
+
+        CMS.registerPreviewStyle('/admin/preview.css');
+      })();
+    </script>
+  </body>
+</html>

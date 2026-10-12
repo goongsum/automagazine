@@ -1,0 +1,256 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SideColumn from '../components/SideColumn.astro';
+---
+
+<BaseLayout title="기사 검색" description="오토매거진 기사 검색" noindex>
+  <div class="container search-page">
+    <header class="search-head">
+      <h1>기사 검색</h1>
+      <form action="/search/" method="get" role="search" class="search-form">
+        <label class="visually-hidden" for="search-q">검색어</label>
+        <input id="search-q" name="q" type="search" placeholder="예: 유리막코팅, PPF, 세차" autocomplete="off" />
+        <button type="submit">검색</button>
+      </form>
+    </header>
+
+    <div class="search-layout">
+      <div>
+        <p class="search-summary" role="status" aria-live="polite" data-summary>검색어를 입력하세요.</p>
+        <ol class="results" data-results></ol>
+        <noscript><p>검색 기능을 사용하려면 자바스크립트를 켜 주세요.</p></noscript>
+      </div>
+      <SideColumn />
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  interface Entry {
+    url: string;
+    title: string;
+    subtitle: string;
+    category: string;
+    author: string;
+    date: string;
+    image: string;
+    keywords: string;
+    summary: string;
+    text: string;
+  }
+
+  const input = document.getElementById('search-q') as HTMLInputElement;
+  const summary = document.querySelector<HTMLElement>('[data-summary]')!;
+  const list = document.querySelector<HTMLOListElement>('[data-results]')!;
+  const query = (new URLSearchParams(location.search).get('q') ?? '').trim();
+  input.value = query;
+
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+
+  /** 일치하는 부분을 <mark>로 감싼 노드를 만듭니다. */
+  function highlight(text: string, terms: string[]): DocumentFragment {
+    const frag = document.createDocumentFragment();
+    const lower = text.toLowerCase();
+    let pos = 0;
+    while (pos < text.length) {
+      let best = -1;
+      let len = 0;
+      for (const term of terms) {
+        const i = lower.indexOf(term, pos);
+        if (i !== -1 && (best === -1 || i < best)) {
+          best = i;
+          len = term.length;
+        }
+      }
+      if (best === -1) break;
+      frag.append(text.slice(pos, best));
+      const mark = document.createElement('mark');
+      mark.textContent = text.slice(best, best + len);
+      frag.append(mark);
+      pos = best + len;
+    }
+    frag.append(text.slice(pos));
+    return frag;
+  }
+
+  function snippet(entry: Entry, terms: string[]): string {
+    const lower = entry.text.toLowerCase();
+    const hit = terms.map((t) => lower.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+    if (hit === undefined) return entry.summary;
+    const start = Math.max(0, hit - 40);
+    return `${start > 0 ? '…' : ''}${entry.text.slice(start, start + 130)}…`;
+  }
+
+  function render(entries: Entry[], terms: string[]) {
+    list.replaceChildren(
+      ...entries.map((entry) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = entry.url;
+        a.className = 'result';
+
+        const body = document.createElement('div');
+        const label = document.createElement('span');
+        label.className = 'badge';
+        label.textContent = entry.category;
+        const title = document.createElement('h2');
+        title.append(highlight(entry.title, terms));
+        const text = document.createElement('p');
+        text.className = 'result__text';
+        text.append(highlight(snippet(entry, terms), terms));
+        const meta = document.createElement('p');
+        meta.className = 'meta';
+        meta.textContent = [entry.author, entry.date].filter(Boolean).join(' · ');
+        body.append(label, title, text, meta);
+        a.append(body);
+
+        if (entry.image) {
+          const thumb = document.createElement('div');
+          thumb.className = 'thumb';
+          const img = document.createElement('img');
+          img.src = entry.image;
+          img.alt = '';
+          img.loading = 'lazy';
+          thumb.append(img);
+          a.append(thumb);
+        }
+        li.append(a);
+        return li;
+      }),
+    );
+  }
+
+  async function run() {
+    if (!query) return;
+    summary.textContent = '검색 중…';
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    try {
+      const res = await fetch('/search-index.json');
+      const index: Entry[] = await res.json();
+      const scored = index
+        .map((entry, order) => {
+          const title = norm(entry.title);
+          const meta = norm(`${entry.subtitle} ${entry.keywords} ${entry.category} ${entry.author}`);
+          const all = `${title} ${meta} ${norm(entry.text)}`;
+          if (!terms.every((t) => all.includes(norm(t)))) return null;
+          let score = 0;
+          for (const t of terms.map(norm)) {
+            if (title.includes(t)) score += 3;
+            if (meta.includes(t)) score += 2;
+          }
+          return { entry, score, order };
+        })
+        .filter((x): x is { entry: Entry; score: number; order: number } => x !== null)
+        .sort((a, b) => b.score - a.score || a.order - b.order);
+
+      summary.textContent = `‘${query}’ 검색 결과 ${scored.length}건`;
+      render(
+        scored.map((x) => x.entry),
+        terms,
+      );
+    } catch {
+      summary.textContent = '검색 인덱스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    }
+  }
+
+  run();
+</script>
+
+<style>
+  .search-page {
+    padding-top: 24px;
+  }
+  .search-head {
+    padding-bottom: 20px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .search-head h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+  .search-form {
+    display: flex;
+    gap: 8px;
+    max-width: 640px;
+  }
+  .search-form input {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    padding: 0 14px;
+    border: 2px solid var(--brand-dark);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 16px;
+  }
+  .search-form button {
+    height: 48px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--brand-dark);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .search-summary {
+    padding: 16px 0 4px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+  .search-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .results {
+    list-style: none;
+  }
+  .results :global(li) {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .results :global(.result) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 112px;
+    gap: 14px;
+    align-items: start;
+  }
+  .results :global(.result h2) {
+    margin-top: 6px;
+    font-size: 17px;
+  }
+  .results :global(.result__text) {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .results :global(.meta) {
+    margin-top: 6px;
+  }
+  .results :global(.thumb) {
+    aspect-ratio: 4 / 3;
+  }
+  .results :global(mark) {
+    background: #fff1a8;
+    color: inherit;
+    padding: 0 1px;
+  }
+  @media (min-width: 768px) {
+    .results :global(.result) {
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 20px;
+    }
+    .results :global(.result h2) {
+      font-size: 19px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .search-layout {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 48px;
+    }
+  }
+</style>

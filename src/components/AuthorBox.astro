@@ -1,0 +1,59 @@
+---
+import AuthorAvatar from './AuthorAvatar.astro';
+import { reporterUrl, type Author } from '../lib/articles';
+
+interface Props {
+  author: Author;
+}
+const { author } = Astro.props;
+const { name, role, email, bio } = author.data;
+---
+
+<section class="author-box" aria-label="기자 정보">
+  <AuthorAvatar author={author} size={56} />
+  <div>
+    <p class="author-box__name">
+      <a href={reporterUrl(author.id)}>{name}</a> <span>{role}</span>
+    </p>
+    {bio && <p class="author-box__bio">{bio}</p>}
+    <p class="author-box__links">
+      {email && <a href={`mailto:${email}`}>{email}</a>}
+      <a href={reporterUrl(author.id)}>{name} {role}의 다른 기사 →</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .author-box {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+  }
+  .author-box__name {
+    font-size: 17px;
+    font-weight: 800;
+  }
+  .author-box__name span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .author-box__bio {
+    margin-top: 4px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .author-box__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .author-box__links a {
+    color: var(--brand);
+  }
+</style>

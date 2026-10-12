@@ -1,0 +1,39 @@
+---
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SEO, { type Props as SEOProps } from '../components/SEO.astro';
+import { site } from '../lib/site';
+
+interface Props extends SEOProps {
+  currentCategory?: string;
+}
+
+const { currentCategory, ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b2545" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.siteName} RSS`} href="/rss.xml" />
+    <meta name="generator" content={Astro.generator} />
+    <SEO {...seo} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문 바로가기</a>
+    <Header current={currentCategory} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

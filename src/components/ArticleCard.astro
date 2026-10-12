@@ -1,0 +1,183 @@
+---
+import { getCategory } from '../lib/categories';
+import { articleUrl, getSummary, type Article } from '../lib/articles';
+import { formatDate, formatDateTime } from '../lib/format';
+
+interface Props {
+  article: Article;
+  /** lead: 대형 헤드라인 / card: 세로 카드 / row: 가로 목록형 / compact: 제목만 */
+  variant?: 'lead' | 'card' | 'row' | 'compact';
+  authorName?: string;
+  showCategory?: boolean;
+  headingLevel?: 'h2' | 'h3';
+  eager?: boolean;
+}
+
+const {
+  article,
+  variant = 'card',
+  authorName,
+  showCategory = true,
+  headingLevel = 'h3',
+  eager = false,
+} = Astro.props;
+const { title, subtitle, image, imageAlt, category, pubDate, sponsored } = article.data;
+const href = articleUrl(article);
+const categoryName = getCategory(category).name;
+const Heading = headingLevel;
+const showImage = variant !== 'compact';
+---
+
+<article class:list={['card', `card--${variant}`]}>
+  <a href={href} class="card__link">
+    {
+      showImage &&
+        (image ? (
+          <div class="thumb card__thumb">
+            <img
+              src={image}
+              alt={imageAlt ?? ''}
+              loading={eager ? 'eager' : 'lazy'}
+              fetchpriority={eager ? 'high' : undefined}
+              decoding="async"
+            />
+          </div>
+        ) : (
+          <div class="thumb thumb--empty card__thumb" aria-hidden="true">
+            {categoryName}
+          </div>
+        ))
+    }
+    <div class="card__body">
+      {
+        (showCategory || sponsored) && variant !== 'compact' && (
+          <p class="card__labels">
+            {sponsored && <span class="badge badge--ad">광고</span>}
+            {showCategory && <span class="badge">{categoryName}</span>}
+          </p>
+        )
+      }
+      <Heading class="card__title">{title}</Heading>
+      {variant === 'lead' && subtitle && <p class="card__subtitle">{subtitle}</p>}
+      {variant === 'row' && <p class="card__summary">{getSummary(article, 90)}</p>}
+      <p class="meta card__meta">
+        {authorName && variant !== 'compact' && <span>{authorName}</span>}
+        <time datetime={pubDate.toISOString()}>
+          {variant === 'compact' ? formatDate(pubDate) : formatDateTime(pubDate)}
+        </time>
+      </p>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card__link {
+    display: block;
+    color: inherit;
+  }
+  .card__link:hover .card__title {
+    color: var(--brand);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .card__labels {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .card__title {
+    font-size: 17px;
+    font-weight: 700;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+  .card__subtitle {
+    margin-top: 8px;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+  .card__summary {
+    margin-top: 6px;
+    color: var(--ink-2);
+    font-size: 14px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .card__meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* card */
+  .card--card .card__thumb {
+    margin-bottom: 10px;
+  }
+
+  /* lead */
+  .card--lead .card__thumb {
+    margin-bottom: 14px;
+  }
+  .card--lead .card__title {
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.32;
+  }
+
+  /* row */
+  .card--row .card__link {
+    display: grid;
+    grid-template-columns: 1fr 112px;
+    gap: 14px;
+    align-items: start;
+  }
+  .card--row .card__thumb {
+    order: 2;
+    aspect-ratio: 4 / 3;
+  }
+  .card--row .card__title {
+    font-size: 16.5px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .card--row .card__summary {
+    display: none;
+  }
+
+  /* compact */
+  .card--compact .card__title {
+    font-size: 15px;
+    font-weight: 600;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .card--compact .card__meta {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  @media (min-width: 768px) {
+    .card--lead .card__title {
+      font-size: 30px;
+    }
+    .card--lead .card__subtitle {
+      font-size: 17px;
+    }
+    .card--row .card__link {
+      grid-template-columns: 1fr 200px;
+      gap: 20px;
+    }
+    .card--row .card__title {
+      font-size: 19px;
+    }
+    .card--row .card__summary {
+      display: -webkit-box;
+    }
+  }
+</style>

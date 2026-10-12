@@ -1,0 +1,348 @@
+---
+import Logo from './Logo.astro';
+import { CATEGORIES, TOPICS, categoryUrl, topicUrl } from '../lib/categories';
+import { site } from '../lib/site';
+
+interface Props {
+  /** 현재 보고 있는 카테고리 id (메뉴 강조용) */
+  current?: string;
+}
+const { current } = Astro.props;
+const navItems = [
+  { id: 'all', name: '전체기사', href: '/articles/' },
+  ...CATEGORIES.map((c) => ({ id: c.id as string, name: c.name, href: categoryUrl(c.id) })),
+];
+---
+
+<header class="site-header">
+  <div class="topbar">
+    <div class="container topbar__inner">
+      <p class="topbar__tagline">{site.tagline}</p>
+      <ul class="topbar__links">
+        <li><a href="/tip/">기사제보</a></li>
+        <li><a href="/about/">회사소개</a></li>
+        <li><a href="/about/#ad">광고문의</a></li>
+        <li><a href="/rss.xml">RSS</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container masthead">
+    <button class="icon-btn" type="button" data-open-menu aria-controls="site-menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      <span class="visually-hidden">전체메뉴 열기</span>
+    </button>
+
+    <a class="masthead__brand" href="/" aria-label={`${site.siteName} 홈`}>
+      <Logo />
+    </a>
+
+    <form class="masthead__search" action="/search/" method="get" role="search">
+      <label class="visually-hidden" for="header-q">기사 검색</label>
+      <input id="header-q" name="q" type="search" placeholder="기사 검색" autocomplete="off" />
+      <button type="submit" aria-label="검색">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      </button>
+    </form>
+
+    <a class="icon-btn icon-btn--search" href="/search/" aria-label="검색">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    </a>
+  </div>
+
+  <nav class="catnav" aria-label="카테고리">
+    <div class="container">
+      <ul class="catnav__list">
+        {
+          navItems.map((item) => (
+            <li>
+              <a href={item.href} aria-current={item.id === current ? 'page' : undefined}>
+                {item.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </nav>
+
+  <div class="menu" id="site-menu" hidden>
+    <div class="menu__backdrop" data-close-menu></div>
+    <div class="menu__panel" role="dialog" aria-modal="true" aria-label="전체메뉴">
+      <div class="menu__head">
+        <Logo />
+        <button class="icon-btn" type="button" data-close-menu>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+          <span class="visually-hidden">전체메뉴 닫기</span>
+        </button>
+      </div>
+      <form class="menu__search" action="/search/" method="get" role="search">
+        <label class="visually-hidden" for="menu-q">기사 검색</label>
+        <input id="menu-q" name="q" type="search" placeholder="검색어를 입력하세요" />
+        <button type="submit">검색</button>
+      </form>
+      <p class="menu__label">카테고리</p>
+      <ul class="menu__grid">
+        {navItems.map((item) => <li><a href={item.href}>{item.name}</a></li>)}
+      </ul>
+      <p class="menu__label">분야별</p>
+      <ul class="menu__grid">
+        {TOPICS.map((t) => <li><a href={topicUrl(t.id)}>{t.name}</a></li>)}
+      </ul>
+      <p class="menu__label">오토매거진</p>
+      <ul class="menu__grid">
+        <li><a href="/reporter/">기자 소개</a></li>
+        <li><a href="/tip/">기사제보</a></li>
+        <li><a href="/about/">회사소개</a></li>
+        <li><a href="/about/#ad">광고문의</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<script>
+  const menu = document.getElementById('site-menu');
+  const opener = document.querySelector<HTMLButtonElement>('[data-open-menu]');
+
+  function setMenu(open: boolean) {
+    if (!menu || !opener) return;
+    menu.hidden = !open;
+    opener.setAttribute('aria-expanded', String(open));
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+    if (open) menu.querySelector<HTMLInputElement>('input')?.focus();
+    else opener.focus();
+  }
+
+  opener?.addEventListener('click', () => setMenu(true));
+  menu?.querySelectorAll('[data-close-menu]').forEach((el) => el.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu && !menu.hidden) setMenu(false);
+  });
+</script>
+
+<style>
+  .site-header {
+    background: #fff;
+  }
+
+  .topbar {
+    display: none;
+    background: var(--brand-dark);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12.5px;
+  }
+  .topbar__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 34px;
+  }
+  .topbar__links {
+    display: flex;
+    gap: 18px;
+    list-style: none;
+  }
+  .topbar a:hover {
+    color: #fff;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 60px;
+  }
+  .masthead__brand {
+    display: flex;
+  }
+  .masthead__search {
+    display: none;
+  }
+
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .icon-btn:hover {
+    background: var(--bg-soft);
+  }
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .catnav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .catnav .container {
+    padding: 0;
+  }
+  .catnav__list {
+    display: flex;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 6px;
+  }
+  .catnav__list::-webkit-scrollbar {
+    display: none;
+  }
+  .catnav__list a {
+    display: block;
+    padding: 12px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--ink-2);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+  }
+  .catnav__list a[aria-current='page'] {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+  }
+
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+  .menu__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 37, 69, 0.45);
+  }
+  .menu__panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(360px, 88vw);
+    background: #fff;
+    padding: 12px 16px 32px;
+    overflow-y: auto;
+  }
+  .menu__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .menu__search {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .menu__search input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    font: inherit;
+  }
+  .menu__search button {
+    height: 42px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--brand-dark);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .menu__label {
+    margin: 20px 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .menu__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    list-style: none;
+  }
+  .menu__grid a {
+    display: block;
+    padding: 9px 10px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    .topbar {
+      display: block;
+    }
+    .masthead {
+      height: 84px;
+    }
+    .masthead > .icon-btn:first-child {
+      order: 0;
+    }
+    .masthead__brand {
+      margin-right: auto;
+      margin-left: 4px;
+    }
+    .masthead__search {
+      display: flex;
+      align-items: center;
+      width: 280px;
+      height: 42px;
+      border: 2px solid var(--brand-dark);
+      border-radius: 999px;
+      padding: 0 6px 0 16px;
+    }
+    .masthead__search input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      font: inherit;
+      font-size: 15px;
+      background: none;
+    }
+    .masthead__search button {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      color: var(--brand-dark);
+    }
+    .icon-btn--search {
+      display: none;
+    }
+    .catnav__list {
+      justify-content: center;
+      gap: 8px;
+    }
+    .catnav__list a {
+      padding: 13px 16px;
+      font-size: 16px;
+    }
+  }
+</style>

@@ -1,0 +1,40 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ListPage from '../../../components/ListPage.astro';
+import TopicChips from '../../../components/TopicChips.astro';
+import { TOPICS, topicUrl, type Topic } from '../../../lib/categories';
+import { getArticles, PAGE_SIZE, type Article } from '../../../lib/articles';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const articles = await getArticles();
+  return TOPICS.flatMap((topic) =>
+    paginate(
+      articles.filter((a) => a.data.topics.includes(topic.id)),
+      { pageSize: PAGE_SIZE, params: { topic: topic.id }, props: { topic } },
+    ),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<Article>;
+  topic: Topic;
+}
+const { page, topic } = Astro.props;
+const description = `${topic.name} 관련 기사 모아보기`;
+const title = page.currentPage > 1 ? `#${topic.name} (${page.currentPage}페이지)` : `#${topic.name}`;
+---
+
+<BaseLayout title={title} description={description}>
+  <ListPage title={`#${topic.name}`} description={description} page={page} baseUrl={topicUrl(topic.id)}>
+    <div slot="after-title" class="topic-chips">
+      <TopicChips current={topic.id} label="다른 분야" />
+    </div>
+  </ListPage>
+</BaseLayout>
+
+<style>
+  .topic-chips {
+    margin-top: 16px;
+  }
+</style>

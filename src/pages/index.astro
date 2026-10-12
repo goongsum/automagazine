@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from '../components/AdSlot.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import SideColumn from '../components/SideColumn.astro';
+import TopicChips from '../components/TopicChips.astro';
+import { CATEGORIES, categoryUrl } from '../lib/categories';
+import { getArticles, getAuthors, pickHeadlines } from '../lib/articles';
+import { site, absoluteUrl } from '../lib/site';
+
+const articles = await getArticles();
+const authors = await getAuthors();
+const authorName = (id: string) => authors.get(id)?.data.name;
+
+const [lead, ...subHeadlines] = pickHeadlines(articles, 4);
+const latest = articles.slice(0, 8);
+const sections = CATEGORIES.map((category) => ({
+  category,
+  items: articles.filter((a) => a.data.category === category.id).slice(0, 4),
+})).filter((s) => s.items.length > 0);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: site.siteName,
+    alternateName: site.siteNameEn,
+    url: absoluteUrl('/'),
+    inLanguage: 'ko-KR',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${absoluteUrl('/search/')}?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'NewsMediaOrganization',
+    name: site.siteName,
+    alternateName: site.siteNameEn,
+    url: absoluteUrl('/'),
+    logo: absoluteUrl('/images/logo.png'),
+    email: site.email,
+    telephone: site.phone,
+    publishingPrinciples: absoluteUrl('/about/'),
+    parentOrganization: { '@type': 'Organization', name: site.company },
+  },
+];
+---
+
+<BaseLayout jsonLd={jsonLd}>
+  <h1 class="visually-hidden">{site.siteName} - {site.tagline}</h1>
+
+  <div class="container home">
+    <AdSlot slot="home_top" class="home__ad-top" />
+
+    {
+      lead ? (
+        <section class="headline" aria-labelledby="headline-title">
+          <h2 id="headline-title" class="visually-hidden">헤드라인</h2>
+          <div class="headline__lead">
+            <ArticleCard article={lead} variant="lead" headingLevel="h3" eager authorName={authorName(lead.data.author.id)} />
+          </div>
+          {subHeadlines.length > 0 && (
+            <ul class="headline__subs">
+              {subHeadlines.map((article) => (
+                <li>
+                  <ArticleCard article={article} variant="card" />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : (
+        <p class="empty">아직 등록된 기사가 없습니다. 관리자 화면(/admin/)에서 첫 기사를 작성해 보세요.</p>
+      )
+    }
+
+    <TopicChips />
+
+    <div class="home__grid">
+      <section aria-labelledby="latest-title">
+        <div class="section-title">
+          <h2 id="latest-title">최신 기사</h2>
+          <a href="/articles/">전체기사 보기</a>
+        </div>
+        <ol class="latest">
+          {
+            latest.map((article) => (
+              <li>
+                <ArticleCard article={article} variant="row" authorName={authorName(article.data.author.id)} />
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+      <SideColumn showLatest={false} />
+    </div>
+
+    <AdSlot slot="home_middle" />
+
+    {
+      sections.map(({ category, items }) => (
+        <section class="cat-section" aria-labelledby={`cat-${category.id}`}>
+          <div class="section-title">
+            <h2 id={`cat-${category.id}`}>
+              <a href={categoryUrl(category.id)}>{category.name}</a>
+            </h2>
+            <a href={categoryUrl(category.id)}>더보기</a>
+          </div>
+          <ul class="cat-section__grid">
+            {items.map((article) => (
+              <li>
+                <ArticleCard article={article} variant="card" showCategory={false} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 20px;
+  }
+  .home > :global(.home__ad-top) {
+    margin-bottom: -8px;
+  }
+
+  .headline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .headline__subs {
+    display: grid;
+    gap: 16px;
+    list-style: none;
+  }
+  /* 모바일: 서브 헤드라인은 썸네일을 오른쪽에 둔 목록형 */
+  .headline__subs :global(.card--card .card__link) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 112px;
+    gap: 14px;
+  }
+  .headline__subs :global(.card--card .card__thumb) {
+    order: 2;
+    margin-bottom: 0;
+    aspect-ratio: 4 / 3;
+  }
+  .headline__subs :global(.card__title) {
+    font-size: 16px;
+  }
+
+  .home__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .latest {
+    list-style: none;
+  }
+  .latest li {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .latest li:first-child {
+    padding-top: 0;
+  }
+
+  .cat-section__grid {
+    display: grid;
+    gap: 20px;
+    list-style: none;
+  }
+
+  .empty {
+    padding: 48px 0;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  @media (min-width: 640px) {
+    .cat-section__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .home {
+      gap: 40px;
+      padding-top: 28px;
+    }
+    .headline {
+      grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+      gap: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .headline__subs {
+      grid-template-columns: 1fr;
+      align-content: start;
+      gap: 18px;
+    }
+    .headline__subs :global(.card--card .card__link) {
+      grid-template-columns: 150px minmax(0, 1fr);
+    }
+    .headline__subs :global(.card--card .card__thumb) {
+      order: 0;
+      aspect-ratio: 16 / 10;
+    }
+    .home__grid {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 48px;
+    }
+    .cat-section__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

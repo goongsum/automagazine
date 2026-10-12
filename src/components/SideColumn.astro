@@ -1,0 +1,90 @@
+---
+import AdSlot from './AdSlot.astro';
+import ArticleCard from './ArticleCard.astro';
+import { getArticles } from '../lib/articles';
+
+interface Props {
+  /** 목록에서 뺄 기사 id (보고 있는 기사) */
+  excludeId?: string;
+  /** '최신 기사' 목록 표시 여부 (메인처럼 이미 최신 기사가 있는 곳에서는 끔) */
+  showLatest?: boolean;
+}
+const { excludeId, showLatest = true } = Astro.props;
+const latest = showLatest ? (await getArticles()).filter((a) => a.id !== excludeId).slice(0, 6) : [];
+---
+
+<aside class="side">
+  <AdSlot slot="sidebar" />
+
+  {
+    latest.length > 0 && (
+      <section class="side__box">
+        <div class="section-title">
+          <h2>최신 기사</h2>
+          <a href="/articles/">더보기</a>
+        </div>
+        <ol class="side__list">
+          {latest.map((article) => (
+            <li>
+              <ArticleCard article={article} variant="compact" />
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
+
+  <a class="side__tip" href="/tip/">
+    <strong>기사제보</strong>
+    <span>현장의 소식, 신제품, 업계 이슈를 알려주세요.</span>
+  </a>
+</aside>
+
+<style>
+  .side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-content: start;
+  }
+  .side__list {
+    list-style: none;
+    counter-reset: side;
+  }
+  .side__list li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    counter-increment: side;
+  }
+  .side__list li::before {
+    content: counter(side);
+    font-weight: 800;
+    color: var(--brand);
+    font-size: 15px;
+  }
+  .side__tip {
+    display: block;
+    padding: 18px;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--brand-dark), #134a86);
+    color: #fff;
+  }
+  .side__tip:hover {
+    color: #fff;
+  }
+  .side__tip strong {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .side__tip strong::after {
+    content: ' →';
+  }
+  .side__tip span {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+</style>

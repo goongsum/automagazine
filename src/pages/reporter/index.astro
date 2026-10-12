@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AuthorAvatar from '../../components/AuthorAvatar.astro';
+import { getArticles, getAuthors, reporterUrl } from '../../lib/articles';
+
+const authors = [...(await getAuthors()).values()];
+const articles = await getArticles();
+const countOf = (id: string) => articles.filter((a) => a.data.author.id === id).length;
+---
+
+<BaseLayout title="기자 소개" description="오토매거진 기자와 편집국을 소개합니다.">
+  <div class="container reporters">
+    <header class="list-head">
+      <h1>기자 소개</h1>
+      <p>이름을 누르면 기자별 기사 목록을 볼 수 있습니다.</p>
+    </header>
+    <ul class="grid">
+      {
+        authors.map((author) => (
+          <li>
+            <a href={reporterUrl(author.id)} class="person">
+              <AuthorAvatar author={author} size={64} />
+              <span>
+                <strong>
+                  {author.data.name} <small>{author.data.role}</small>
+                </strong>
+                {author.data.bio && <span class="bio">{author.data.bio}</span>}
+                <span class="meta">기사 {countOf(author.id)}건</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .reporters {
+    padding-top: 24px;
+  }
+  .list-head {
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .list-head h1 {
+    font-size: 28px;
+    font-weight: 800;
+  }
+  .list-head p {
+    margin-top: 6px;
+    color: var(--ink-2);
+  }
+  .grid {
+    display: grid;
+    gap: 16px;
+    list-style: none;
+  }
+  .person {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .person strong {
+    display: block;
+    font-size: 18px;
+  }
+  .person small {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .bio {
+    display: block;
+    margin-top: 4px;
+    color: var(--ink-2);
+    font-size: 14px;
+  }
+  .meta {
+    display: block;
+    margin-top: 6px;
+  }
+  @media (min-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

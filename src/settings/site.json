@@ -1,0 +1,31 @@
+{
+  "siteName": "오토매거진",
+  "siteNameEn": "AutoMagazine",
+  "tagline": "카케어·디테일링 전문 인터넷신문",
+  "description": "세차, 광택, 유리막코팅, PPF, 틴팅, 실내크리닝까지. 카케어·디테일링 업계 뉴스와 시공 가이드, 제품 리뷰, 인터뷰, 교육·행사 소식을 전하는 전문 매체입니다.",
+  "siteUrl": "https://automagazine.pages.dev",
+  "company": "준앤컴퍼니 유한회사",
+  "businessNumber": "000-00-00000 (임시)",
+  "registrationNumber": "서울, 아00000 (등록 예정)",
+  "registrationDate": "0000년 00월 00일 (등록 예정)",
+  "publishDate": "2026년 10월 12일",
+  "publisher": "홍길동 (임시)",
+  "editor": "홍길동 (임시)",
+  "youthOfficer": "홍길동 (임시)",
+  "privacyOfficer": "홍길동 (임시)",
+  "address": "서울특별시 ○○구 ○○로 00, 0층 (임시)",
+  "phone": "02-000-0000 (임시)",
+  "fax": "",
+  "email": "contact@example.com",
+  "tipEmail": "news@example.com",
+  "adEmail": "ad@example.com",
+  "tipFormEndpoint": "",
+  "policyEffectiveDate": "2026년 10월 12일",
+  "defaultOgImage": "/images/og-default.jpg",
+  "social": {
+    "youtube": "",
+    "instagram": "",
+    "facebook": "",
+    "naverBlog": ""
+  }
+}

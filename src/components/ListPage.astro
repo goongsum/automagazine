@@ -1,0 +1,100 @@
+---
+import ArticleCard from './ArticleCard.astro';
+import Pagination from './Pagination.astro';
+import SideColumn from './SideColumn.astro';
+import { getAuthors, type Article } from '../lib/articles';
+import type { Page } from 'astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  page: Page<Article>;
+  baseUrl: string;
+}
+
+const { title, description, page, baseUrl } = Astro.props;
+const authors = await getAuthors();
+---
+
+<div class="container list-page">
+  <header class="list-head">
+    <slot name="before-title" />
+    <h1>{title}</h1>
+    {description && <p>{description}</p>}
+    <p class="meta">총 {page.total}건{page.lastPage > 1 && ` · ${page.currentPage}/${page.lastPage} 페이지`}</p>
+    <slot name="after-title" />
+  </header>
+
+  <div class="list-layout">
+    <div>
+      {
+        page.data.length > 0 ? (
+          <ol class="list">
+            {page.data.map((article) => (
+              <li>
+                <ArticleCard
+                  article={article}
+                  variant="row"
+                  headingLevel="h2"
+                  authorName={authors.get(article.data.author.id)?.data.name}
+                />
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p class="empty">아직 등록된 기사가 없습니다.</p>
+        )
+      }
+      <Pagination page={page} baseUrl={baseUrl} />
+    </div>
+    <SideColumn />
+  </div>
+</div>
+
+<style>
+  .list-page {
+    padding-top: 24px;
+  }
+  .list-head {
+    padding-bottom: 18px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .list-head h1 {
+    font-size: 26px;
+    font-weight: 800;
+  }
+  .list-head > p:not(.meta) {
+    margin-top: 6px;
+    color: var(--ink-2);
+  }
+  .list-head .meta {
+    margin-top: 6px;
+  }
+  .list-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .list {
+    list-style: none;
+  }
+  .list li {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .empty {
+    padding: 60px 0;
+    text-align: center;
+    color: var(--muted);
+  }
+  @media (min-width: 1024px) {
+    .list-layout {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 48px;
+    }
+    .list-head h1 {
+      font-size: 32px;
+    }
+  }
+</style>

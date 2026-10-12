@@ -1,0 +1,34 @@
+{
+  "enabled": true,
+  "showPlaceholder": true,
+  "slots": {
+    "home_top": {
+      "active": false,
+      "advertiser": "",
+      "image": "",
+      "url": "",
+      "alt": ""
+    },
+    "home_middle": {
+      "active": false,
+      "advertiser": "",
+      "image": "",
+      "url": "",
+      "alt": ""
+    },
+    "sidebar": {
+      "active": false,
+      "advertiser": "",
+      "image": "",
+      "url": "",
+      "alt": ""
+    },
+    "article_bottom": {
+      "active": false,
+      "advertiser": "",
+      "image": "",
+      "url": "",
+      "alt": ""
+    }
+  }
+}

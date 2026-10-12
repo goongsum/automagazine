@@ -1,0 +1,247 @@
+# =============================================================
+#  오토매거진 관리자 화면 설정 (Decap CMS)
+#  - 접속: https://<사이트 주소>/admin/
+#  - 로그인한 사람이 GitHub 저장소에 쓰기 권한이 있어야 편집할 수 있습니다.
+#  - backend.base_url / site_url 은 admin/index.html 에서 접속 주소로 자동 지정됩니다.
+# =============================================================
+
+backend:
+  name: github
+  repo: goongsum/automagazine # GitHub 저장소 (소유자/저장소이름)
+  branch: main # 기사가 저장될 브랜치 = Cloudflare Pages 프로덕션 브랜치
+  auth_endpoint: api/auth # functions/api/auth.js
+  commit_messages:
+    create: "{{collection}} 작성: {{slug}} (by {{author-login}})"
+    update: "{{collection}} 수정: {{slug}} (by {{author-login}})"
+    delete: "{{collection}} 삭제: {{slug}} (by {{author-login}})"
+    uploadMedia: "사진 업로드: {{path}} (by {{author-login}})"
+    deleteMedia: "사진 삭제: {{path}} (by {{author-login}})"
+
+# 편집장 승인 절차가 필요하면 아래 주석을 풀면 됩니다. (초안 → 검토 → 발행)
+# publish_mode: editorial_workflow
+
+locale: ko
+logo_url: /images/logo.png
+show_preview_links: true
+
+# 업로드한 사진이 저장되는 위치와 기사에 기록되는 주소
+media_folder: public/images/uploads
+public_folder: /images/uploads
+
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: "-"
+
+collections:
+  # -----------------------------------------------------------
+  # 기사
+  # -----------------------------------------------------------
+  - name: articles
+    label: 기사
+    label_singular: 기사
+    description: 기사를 작성하고 '발행'을 누르면 1~2분 뒤 사이트에 반영됩니다.
+    folder: src/content/articles
+    create: true
+    # 파일 이름 = 기사 주소(/article/20261012-093000/)
+    slug: "{{year}}{{month}}{{day}}-{{hour}}{{minute}}{{second}}"
+    preview_path: "article/{{slug}}/"
+    summary: "{{title}}  ·  {{pubDate | date('YYYY.MM.DD HH:mm')}}"
+    sortable_fields:
+      - { field: pubDate, label: 입력 일시, default_sort: desc }
+      - { field: title, label: 제목 }
+    view_filters:
+      - { label: 뉴스, field: category, pattern: "^news$" }
+      - { label: 시공 가이드, field: category, pattern: "^guide$" }
+      - { label: 제품 리뷰, field: category, pattern: "^review$" }
+      - { label: 인터뷰, field: category, pattern: "^interview$" }
+      - { label: 교육·행사, field: category, pattern: "^education$" }
+      - { label: 헤드라인, field: headline, pattern: true }
+      - { label: 비공개(초안), field: draft, pattern: true }
+    view_groups:
+      - { label: 카테고리, field: category }
+    fields:
+      - { label: 제목, name: title, widget: string }
+      - { label: 부제, name: subtitle, widget: string, required: false, hint: 제목 아래에 표시되는 한 줄 요약 }
+      - label: 카테고리
+        name: category
+        widget: select
+        default: news
+        options:
+          - { label: 뉴스, value: news }
+          - { label: 시공 가이드, value: guide }
+          - { label: 제품 리뷰, value: review }
+          - { label: 인터뷰, value: interview }
+          - { label: 교육·행사, value: education }
+      - label: 분야
+        name: topics
+        widget: select
+        multiple: true
+        required: false
+        default: []
+        hint: 해당하는 분야를 모두 고르세요. 분야별 모아보기에 사용됩니다.
+        options:
+          - { label: 세차, value: wash }
+          - { label: 광택, value: polish }
+          - { label: 유리막코팅, value: coating }
+          - { label: PPF, value: ppf }
+          - { label: 틴팅, value: tinting }
+          - { label: 실내크리닝, value: interior }
+          - { label: 신제품, value: new-product }
+          - { label: 업계 소식, value: industry }
+      - label: 기자
+        name: author
+        widget: relation
+        collection: authors
+        value_field: "{{slug}}"
+        search_fields: [name]
+        display_fields: [name, role]
+      - label: 입력 일시
+        name: pubDate
+        widget: datetime
+        default: "{{now}}"
+        format: "YYYY-MM-DD[T]HH:mm:ssZ"
+        hint: 새 기사는 지금 시각으로 채워집니다. 사이트에는 '입력' 일시로 표시됩니다.
+      - label: 수정 일시
+        name: updatedDate
+        widget: datetime
+        required: false
+        default: ""
+        format: "YYYY-MM-DD[T]HH:mm:ssZ"
+        hint: 발행 후 기사를 고쳤을 때만 입력하세요. 기사에 '수정' 일시로 표시됩니다.
+      - label: 대표 이미지
+        name: image
+        widget: image
+        required: false
+        choose_url: false
+        hint: 가로 1200px 이상, 16:9 비율을 권장합니다. 목록 썸네일과 SNS 공유 이미지(OG)로도 쓰입니다. (최대 5MB)
+        media_library: { config: { max_file_size: 5242880 } }
+      - { label: 대표 이미지 설명 (대체 텍스트), name: imageAlt, widget: string, required: false, hint: 시각장애인용 화면 낭독기와 검색엔진이 읽는 설명 }
+      - { label: 사진 설명·출처, name: imageCaption, widget: string, required: false, hint: "예: 시공 후 도장면 모습. 사진=오토매거진" }
+      - { label: 요약 (검색·공유용), name: description, widget: text, required: false, hint: 비워 두면 부제나 본문 앞부분이 쓰입니다. 120자 안팎을 권장합니다. }
+      - { label: 키워드, name: tags, widget: list, required: false, default: [], hint: "쉼표(,)로 구분해 입력하세요. 예: 유리막코팅, 신차관리" }
+      - { label: 헤드라인으로 지정, name: headline, widget: boolean, required: false, default: false, hint: 켜면 메인 상단 헤드라인 영역에 우선 노출됩니다. }
+      - { label: 기사형 광고, name: sponsored, widget: boolean, required: false, default: false, hint: 광고주에게 대가를 받고 쓴 기사는 반드시 켜세요. 기사와 목록에 '광고' 표시가 붙습니다. }
+      - { label: 비공개 (초안), name: draft, widget: boolean, required: false, default: false, hint: 켜 두면 저장은 되지만 사이트에는 보이지 않습니다. }
+      - label: 본문
+        name: body
+        widget: markdown
+        hint: "본문 사진은 이미지 버튼으로 넣으세요. 사진 바로 다음 줄을 기울임(*설명*)으로 쓰면 사진 설명으로 표시됩니다."
+        media_library: { config: { max_file_size: 5242880 } }
+
+  # -----------------------------------------------------------
+  # 기자
+  # -----------------------------------------------------------
+  - name: authors
+    label: 기자
+    label_singular: 기자
+    description: 기사 작성 화면의 '기자' 목록과 기자별 기사 페이지에 쓰입니다.
+    folder: src/content/authors
+    extension: json
+    format: json
+    create: true
+    identifier_field: name
+    slug: "{{fields.slug}}"
+    summary: "{{name}} {{role}}"
+    fields:
+      - label: 아이디 (영문)
+        name: slug
+        widget: string
+        pattern: ["^[a-z0-9]+(-[a-z0-9]+)*$", "영문 소문자, 숫자, 하이픈(-)만 쓸 수 있습니다."]
+        hint: "기자 페이지 주소에 쓰입니다. 예: hong-gildong → /reporter/hong-gildong/ (처음 저장한 뒤에는 바꾸지 마세요)"
+      - { label: 이름, name: name, widget: string }
+      - { label: 직함, name: role, widget: string, default: 기자, hint: "예: 기자, 편집장, 객원기자" }
+      - { label: 이메일, name: email, widget: string, required: false }
+      - { label: 소개, name: bio, widget: text, required: false }
+      - { label: 사진, name: photo, widget: image, required: false, choose_url: false, hint: 정사각형 사진을 권장합니다. 없으면 이름 첫 글자로 표시됩니다. }
+
+  # -----------------------------------------------------------
+  # 고정 페이지
+  # -----------------------------------------------------------
+  - name: pages
+    label: 고정 페이지
+    label_singular: 고정 페이지
+    description: "회사소개·기사제보·개인정보처리방침·청소년보호정책·이용약관. 본문의 {{company}} 같은 표기는 '사이트 설정' 값으로 자동 채워집니다."
+    folder: src/content/pages
+    create: false
+    delete: false
+    summary: "{{title}}"
+    fields:
+      - { label: 제목, name: title, widget: string }
+      - { label: 설명 (검색용), name: description, widget: string, required: false }
+      - label: 본문
+        name: body
+        widget: markdown
+        hint: >-
+          사용할 수 있는 자동 표기: {{siteName}} {{company}} {{publisher}} {{editor}} {{youthOfficer}}
+          {{privacyOfficer}} {{address}} {{phone}} {{email}} {{tipEmail}} {{adEmail}}
+          {{registrationNumber}} {{registrationDate}} {{publishDate}} {{businessNumber}} {{policyEffectiveDate}}
+
+  # -----------------------------------------------------------
+  # 사이트 설정
+  # -----------------------------------------------------------
+  - name: settings
+    label: 사이트 설정
+    description: 하단 법정 표기(등록번호·발행인 등), 연락처, 광고를 관리합니다.
+    editor: { preview: false }
+    files:
+      - name: site
+        label: 발행 정보·연락처
+        file: src/settings/site.json
+        fields:
+          - { label: 제호 (사이트 이름), name: siteName, widget: string }
+          - { label: 영문 이름, name: siteNameEn, widget: string }
+          - { label: 한 줄 소개, name: tagline, widget: string }
+          - { label: 사이트 설명 (검색엔진용), name: description, widget: text }
+          - { label: 사이트 주소, name: siteUrl, widget: string, hint: "예: https://www.automagazine.co.kr (끝에 / 없이). 도메인을 연결하면 바꿔 주세요." }
+          - { label: 운영 회사, name: company, widget: string }
+          - { label: 사업자등록번호, name: businessNumber, widget: string }
+          - { label: 등록번호, name: registrationNumber, widget: string, hint: "예: 서울, 아00000" }
+          - { label: 등록일, name: registrationDate, widget: string, hint: "예: 2026년 11월 1일" }
+          - { label: 발행일, name: publishDate, widget: string }
+          - { label: 발행인, name: publisher, widget: string }
+          - { label: 편집인, name: editor, widget: string }
+          - { label: 청소년보호책임자, name: youthOfficer, widget: string }
+          - { label: 개인정보 보호책임자, name: privacyOfficer, widget: string }
+          - { label: 주소 (발행소), name: address, widget: string }
+          - { label: 대표 전화, name: phone, widget: string }
+          - { label: 팩스, name: fax, widget: string, required: false }
+          - { label: 대표 이메일, name: email, widget: string }
+          - { label: 제보 이메일, name: tipEmail, widget: string }
+          - { label: 광고 문의 이메일, name: adEmail, widget: string }
+          - { label: 제보 양식 전송 주소, name: tipFormEndpoint, widget: string, required: false, hint: "Formspree 등 폼 수신 서비스 주소. 비워 두면 제보 양식이 이메일 작성 창을 엽니다." }
+          - { label: 약관·방침 시행일, name: policyEffectiveDate, widget: string }
+          - { label: 기본 공유 이미지 (OG), name: defaultOgImage, widget: image, choose_url: false, hint: 대표 이미지가 없는 페이지를 SNS에 공유할 때 쓰입니다. 1200×630 권장. }
+          - label: SNS 주소
+            name: social
+            widget: object
+            collapsed: true
+            fields:
+              - { label: 유튜브, name: youtube, widget: string, required: false }
+              - { label: 인스타그램, name: instagram, widget: string, required: false }
+              - { label: 페이스북, name: facebook, widget: string, required: false }
+              - { label: 네이버 블로그, name: naverBlog, widget: string, required: false }
+
+      - name: ads
+        label: 광고 관리
+        file: src/settings/ads.json
+        fields:
+          - { label: 광고 영역 사용, name: enabled, widget: boolean, default: true }
+          - { label: 광고가 없을 때 '광고 문의' 안내 표시, name: showPlaceholder, widget: boolean, default: true }
+          - label: 광고 슬롯
+            name: slots
+            widget: object
+            fields:
+              - label: 메인 상단 배너 (권장 1200×150)
+                name: home_top
+                widget: object
+                collapsed: true
+                fields: &adslot
+                  - { label: 게재 중, name: active, widget: boolean, default: false }
+                  - { label: 광고주, name: advertiser, widget: string, required: false }
+                  - { label: 배너 이미지, name: image, widget: image, required: false, choose_url: false }
+                  - { label: 연결 주소 (클릭 시 이동), name: url, widget: string, required: false }
+                  - { label: 이미지 설명 (대체 텍스트), name: alt, widget: string, required: false }
+              - { label: 메인 중단 배너 (권장 1200×150), name: home_middle, widget: object, collapsed: true, fields: *adslot }
+              - { label: 사이드 배너 (권장 300×250), name: sidebar, widget: object, collapsed: true, fields: *adslot }
+              - { label: 기사 하단 배너 (권장 760×120), name: article_bottom, widget: object, collapsed: true, fields: *adslot }

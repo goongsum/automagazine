@@ -1,0 +1,77 @@
+---
+import { site } from '../lib/site';
+
+interface Props {
+  size?: 'md' | 'lg';
+  inverse?: boolean;
+}
+const { size = 'md', inverse = false } = Astro.props;
+---
+
+<span class:list={['logo', `logo--${size}`, { 'logo--inverse': inverse }]}>
+  <svg class="logo__mark" viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="8" fill="#0b2545"></rect>
+    <path d="M16 5.5c0 0-7.5 8.6-7.5 13.4a7.5 7.5 0 0 0 15 0C23.5 14.1 16 5.5 16 5.5Z" fill="#00a3bf"></path>
+    <path d="M12.6 19.4a3.6 3.6 0 0 0 3.1 3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"></path>
+  </svg>
+  <span class="logo__text">
+    <span class="logo__name">{site.siteName}</span>
+    <span class="logo__en">{site.siteNameEn.toUpperCase()}</span>
+  </span>
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--brand-dark);
+  }
+  .logo__mark {
+    width: 30px;
+    height: 30px;
+    flex: none;
+  }
+  .logo__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .logo__name {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+  }
+  .logo__en {
+    margin-top: 3px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    color: var(--accent);
+  }
+  .logo--lg .logo__mark {
+    width: 38px;
+    height: 38px;
+  }
+  .logo--lg .logo__name {
+    font-size: 28px;
+  }
+  .logo--lg .logo__en {
+    font-size: 10px;
+  }
+  .logo--inverse {
+    color: #fff;
+  }
+  @media (min-width: 768px) {
+    .logo__mark {
+      width: 36px;
+      height: 36px;
+    }
+    .logo__name {
+      font-size: 27px;
+    }
+    .logo__en {
+      font-size: 10px;
+    }
+  }
+</style>

@@ -1,0 +1,354 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import AuthorBox from '../../components/AuthorBox.astro';
+import ShareButtons from '../../components/ShareButtons.astro';
+import SideColumn from '../../components/SideColumn.astro';
+import TopicChips from '../../components/TopicChips.astro';
+import { getCategory, categoryUrl } from '../../lib/categories';
+import {
+  articleUrl,
+  getArticles,
+  getAuthors,
+  getRelatedArticles,
+  getSummary,
+  reporterUrl,
+  type Article,
+} from '../../lib/articles';
+import { formatDateTime, toKstIso } from '../../lib/format';
+import { site, absoluteUrl } from '../../lib/site';
+
+export const getStaticPaths = (async () => {
+  const articles = await getArticles();
+  return articles.map((article) => ({
+    params: { id: article.id },
+    props: { article, related: getRelatedArticles(article, articles) },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  article: Article;
+  related: Article[];
+}
+
+const { article, related } = Astro.props;
+const { title, subtitle, category, topics, tags, pubDate, updatedDate, image, imageAlt, imageCaption, sponsored } =
+  article.data;
+const { Content } = await render(article);
+
+const authors = await getAuthors();
+const author = authors.get(article.data.author.id);
+if (!author) throw new Error(`기사 ${article.id}의 기자(${article.data.author.id})를 찾을 수 없습니다.`);
+
+const categoryInfo = getCategory(category);
+const description = getSummary(article, 150);
+const url = absoluteUrl(articleUrl(article));
+const ogImage = image ?? site.defaultOgImage;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    headline: title,
+    ...(subtitle ? { alternativeHeadline: subtitle } : {}),
+    description,
+    image: [absoluteUrl(ogImage)],
+    datePublished: toKstIso(pubDate),
+    dateModified: toKstIso(updatedDate ?? pubDate),
+    author: [
+      {
+        '@type': 'Person',
+        name: author.data.name,
+        jobTitle: author.data.role,
+        url: absoluteUrl(reporterUrl(author.id)),
+      },
+    ],
+    publisher: {
+      '@type': 'NewsMediaOrganization',
+      name: site.siteName,
+      url: absoluteUrl('/'),
+      logo: { '@type': 'ImageObject', url: absoluteUrl('/images/logo.png'), width: 600, height: 120 },
+    },
+    articleSection: categoryInfo.name,
+    ...(tags.length ? { keywords: tags.join(', ') } : {}),
+    inLanguage: 'ko-KR',
+    isAccessibleForFree: true,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: absoluteUrl('/') },
+      { '@type': 'ListItem', position: 2, name: categoryInfo.name, item: absoluteUrl(categoryUrl(category)) },
+      { '@type': 'ListItem', position: 3, name: title, item: url },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={ogImage}
+  imageAlt={imageAlt}
+  type="article"
+  currentCategory={category}
+  jsonLd={jsonLd}
+  article={{
+    publishedTime: pubDate,
+    modifiedTime: updatedDate,
+    section: categoryInfo.name,
+    author: author.data.name,
+    tags,
+  }}
+>
+  <div class="container article-wrap">
+    <nav class="breadcrumb" aria-label="현재 위치">
+      <a href="/">홈</a>
+      <span aria-hidden="true">›</span>
+      <a href={categoryUrl(category)}>{categoryInfo.name}</a>
+    </nav>
+
+    <div class="article-layout">
+      <article class="article">
+        <header class="article__head">
+          <p class="article__labels">
+            {sponsored && <span class="badge badge--ad">광고</span>}
+            <a class="badge" href={categoryUrl(category)}>{categoryInfo.name}</a>
+          </p>
+          <h1 class="article__title">{title}</h1>
+          {subtitle && <p class="article__subtitle">{subtitle}</p>}
+
+          <div class="byline">
+            <div class="byline__info">
+              <p class="byline__author">
+                <a href={reporterUrl(author.id)}>{author.data.name} {author.data.role}</a>
+                {author.data.email && <a class="byline__email" href={`mailto:${author.data.email}`}>{author.data.email}</a>}
+              </p>
+              <p class="byline__dates">
+                <span>입력 <time datetime={toKstIso(pubDate)}>{formatDateTime(pubDate)}</time></span>
+                {
+                  updatedDate && (
+                    <span>
+                      수정 <time datetime={toKstIso(updatedDate)}>{formatDateTime(updatedDate)}</time>
+                    </span>
+                  )
+                }
+              </p>
+            </div>
+            <ShareButtons url={url} title={title} />
+          </div>
+        </header>
+
+        {
+          sponsored && (
+            <p class="sponsored-note">
+              이 기사는 광고주로부터 대가를 받고 작성한 <strong>기사형 광고</strong>입니다.
+            </p>
+          )
+        }
+
+        {
+          image && (
+            <figure class="article__figure">
+              <img src={image} alt={imageAlt ?? ''} fetchpriority="high" decoding="async" />
+              {imageCaption && <figcaption>{imageCaption}</figcaption>}
+            </figure>
+          )
+        }
+
+        <div class="prose article__body">
+          <Content />
+        </div>
+
+        <p class="article__copyright">
+          저작권자 © {site.siteName} 무단전재 및 재배포 금지
+        </p>
+
+        {
+          tags.length > 0 && (
+            <ul class="article__tags" aria-label="키워드">
+              {tags.map((tag) => (
+                <li>
+                  <a href={`/search/?q=${encodeURIComponent(tag)}`}>#{tag}</a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        {topics.length > 0 && <TopicChips ids={topics} label="관련 분야" />}
+
+        <AdSlot slot="article_bottom" />
+
+        <AuthorBox author={author} />
+
+        {
+          related.length > 0 && (
+            <section class="related" aria-labelledby="related-title">
+              <div class="section-title">
+                <h2 id="related-title">관련 기사</h2>
+              </div>
+              <ul class="related__grid">
+                {related.map((item) => (
+                  <li>
+                    <ArticleCard article={item} variant="card" />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+      </article>
+
+      <SideColumn excludeId={article.id} />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .article-wrap {
+    padding-top: 16px;
+  }
+  .breadcrumb {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+  .article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    min-width: 0;
+  }
+  .article__head {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .article__labels {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .article__title {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -0.03em;
+  }
+  .article__subtitle {
+    margin-top: 14px;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .byline__author {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .byline__email {
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .byline__dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .sponsored-note {
+    padding: 12px 16px;
+    border: 1px solid var(--ad-line);
+    background: var(--ad-bg);
+    color: var(--ad-ink);
+    font-size: 14px;
+    border-radius: var(--radius);
+  }
+  .article__figure {
+    margin: 0;
+  }
+  .article__figure img {
+    width: 100%;
+    border-radius: var(--radius);
+  }
+  .article__figure figcaption {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .article__copyright {
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .article__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+  }
+  .article__tags a {
+    display: block;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .related__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 14px;
+    list-style: none;
+  }
+  .related__grid :global(.card__title) {
+    font-size: 15px;
+  }
+
+  @media (min-width: 768px) {
+    .article__title {
+      font-size: 34px;
+    }
+    .article__subtitle {
+      font-size: 19px;
+    }
+    .related__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .article-layout {
+      grid-template-columns: minmax(0, 1fr) 300px;
+    }
+  }
+</style>

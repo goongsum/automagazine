@@ -1,0 +1,28 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ListPage from '../../../components/ListPage.astro';
+import { CATEGORIES, categoryUrl, type Category } from '../../../lib/categories';
+import { getArticles, PAGE_SIZE, type Article } from '../../../lib/articles';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const articles = await getArticles();
+  return CATEGORIES.flatMap((category) =>
+    paginate(
+      articles.filter((a) => a.data.category === category.id),
+      { pageSize: PAGE_SIZE, params: { category: category.id }, props: { category } },
+    ),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<Article>;
+  category: Category;
+}
+const { page, category } = Astro.props;
+const title = page.currentPage > 1 ? `${category.name} (${page.currentPage}페이지)` : category.name;
+---
+
+<BaseLayout title={title} description={category.description} currentCategory={category.id}>
+  <ListPage title={category.name} description={category.description} page={page} baseUrl={categoryUrl(category.id)} />
+</BaseLayout>

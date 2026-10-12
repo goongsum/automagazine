@@ -1,0 +1,39 @@
+/* 관리자 화면 미리보기 스타일 (실제 사이트 본문과 비슷하게) */
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', sans-serif;
+  color: #1f2937;
+  line-height: 1.85;
+  font-size: 17px;
+  word-break: keep-all;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.35;
+  color: #111827;
+}
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+blockquote {
+  margin: 0;
+  padding: 14px 18px;
+  border-left: 4px solid #00a3bf;
+  background: #f4f6f9;
+}
+table {
+  border-collapse: collapse;
+}
+th,
+td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+}
+a {
+  color: #0a58ca;
+}

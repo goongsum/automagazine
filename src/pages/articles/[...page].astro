@@ -1,0 +1,20 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListPage from '../../components/ListPage.astro';
+import { getArticles, PAGE_SIZE, type Article } from '../../lib/articles';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  return paginate(await getArticles(), { pageSize: PAGE_SIZE });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<Article>;
+}
+const { page } = Astro.props;
+const title = page.currentPage > 1 ? `전체기사 (${page.currentPage}페이지)` : '전체기사';
+---
+
+<BaseLayout title={title} description="오토매거진의 모든 기사를 최신순으로 봅니다." currentCategory="all">
+  <ListPage title="전체기사" page={page} baseUrl="/articles/" />
+</BaseLayout>
